@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>White-Label Wedding Platform — Klick-Dummy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS
+   Die Werkzeug-Oberfläche ist bewusst unbunt. Die einzige Farbe
+   im System ist die Marke der Location — genau so muss sich ein
+   White-Label-Produkt verhalten.
+   ============================================================ */
+:root{
+  --ink:#131A20;
+  --ink-2:#3E4B57;
+  --slate:#6B7885;
+  --line:#D8DEE4;
+  --line-soft:#E8ECEF;
+  --paper:#EDF0F3;
+  --surface:#FFFFFF;
+
+  --brand:#2E5145;
+  --brand-ink:#20382F;
+
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+
+  --rail-h:58px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--sans);
+  background:var(--paper);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  font-size:15px;
+  line-height:1.5;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.hidden{display:none !important}
+
+.eyebrow{
+  font-family:var(--mono);
+  font-size:10.5px;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--slate);
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   SIGNATURE: die Übergabe-Schiene
+   Sie macht das B2B2C-Modell sichtbar — und die Rückstrecke,
+   auf der die Gast-Anfrage zur Location zurückläuft.
+   ============================================================ */
+.rail{
+  position:sticky;top:0;z-index:60;
+  height:var(--rail-h);
+  background:var(--ink);
+  color:#fff;
+  display:flex;align-items:center;gap:22px;
+  padding:0 18px;
+}
+.rail__tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:#7E8B98;white-space:nowrap;
+}
+.rail__track{display:flex;align-items:center;gap:0;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.rail__track::-webkit-scrollbar{display:none}
+.station{
+  position:relative;background:none;border:0;
+  padding:6px 15px;border-radius:2px;
+  color:#8C99A6;white-space:nowrap;
+  font-size:13.5px;font-weight:500;
+  transition:color .18s ease;
+}
+.station:hover{color:#D6DDE4}
+.station[aria-current="true"]{color:#fff}
+.station[aria-current="true"]::after{
+  content:"";position:absolute;left:15px;right:15px;bottom:0;
+  height:2px;background:var(--brand);
+}
+.station__i{font-family:var(--mono);font-size:10.5px;color:#5C6975;margin-right:7px}
+.station[aria-current="true"] .station__i{color:#8C99A6}
+.arrow{color:#3A4652;font-size:12px;flex:none}
+.arrow--back{
+  color:#3A4652;font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;padding-left:12px;border-left:1px solid #2A343E;
+  margin-left:6px;white-space:nowrap;
+}
+.badge{
+  display:inline-block;min-width:17px;height:17px;line-height:17px;
+  padding:0 5px;margin-left:8px;border-radius:9px;
+  background:var(--brand);color:#fff;
+  font-family:var(--mono);font-size:10px;text-align:center;
+}
+.rail__reset{
+  background:none;border:1px solid #2E3944;color:#8C99A6;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:7px 11px;border-radius:2px;
+  transition:border-color .18s,color .18s;white-space:nowrap;
+}
+.rail__reset:hover{border-color:#4A5661;color:#D6DDE4}
+
+/* fliegender Anfrage-Token */
+.token{
+  position:fixed;z-index:200;width:11px;height:11px;border-radius:50%;
+  background:var(--brand);box-shadow:0 0 0 4px rgba(46,81,69,.28);
+  transition:transform 1.05s cubic-bezier(.65,.02,.28,1),opacity .3s ease .85s;
+  pointer-events:none;
+}
+
+/* ============================================================
+   ADMIN (Location)
+   ============================================================ */
+.adm{display:flex;min-height:calc(100vh - var(--rail-h));align-items:stretch}
+.adm__side{
+  width:224px;flex:none;background:var(--surface);
+  border-right:1px solid var(--line);padding:22px 0;
+}
+.venuecard{padding:0 20px 20px;border-bottom:1px solid var(--line-soft);margin-bottom:14px}
+.venuemark{
+  width:34px;height:34px;border-radius:2px;background:var(--brand);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:19px;margin-bottom:11px;
+}
+.venuecard h2{margin:0;font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+.venuecard p{margin:3px 0 0}
+.navlist{display:flex;flex-direction:column;padding:0 10px}
+.navbtn{
+  background:none;border:0;text-align:left;
+  padding:9px 10px;border-radius:2px;font-size:14px;color:var(--ink-2);
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  transition:background .15s,color .15s;
+}
+.navbtn:hover{background:var(--paper)}
+.navbtn[aria-current="true"]{background:var(--paper);color:var(--ink);font-weight:500;box-shadow:inset 2px 0 0 var(--brand)}
+.navbtn .cnt{font-family:var(--mono);font-size:11px;color:var(--slate)}
+
+.adm__main{flex:1;min-width:0;padding:34px 40px 70px;max-width:1080px}
+.phead{margin-bottom:26px}
+.phead h1{
+  margin:7px 0 0;font-family:var(--serif);font-size:34px;
+  font-weight:400;letter-spacing:-.015em;line-height:1.1;
+}
+.phead p{margin:8px 0 0;color:var(--slate);font-size:14px;max-width:62ch}
+
+/* Kennzahlen als Kontoauszug, nicht als Kachel-Raster */
+.ledger{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:2px;margin-bottom:34px;
+}
+.ledger__cell{padding:16px 18px;border-left:1px solid var(--line-soft)}
+.ledger__cell:first-child{border-left:0}
+.ledger__cell b{
+  display:block;font-family:var(--mono);font-weight:500;font-size:26px;
+  letter-spacing:-.02em;margin-top:9px;font-variant-numeric:tabular-nums;
+}
+.ledger__cell small{display:block;margin-top:5px;color:var(--slate);font-size:12px}
+.ledger__cell--key{box-shadow:inset 2px 0 0 var(--brand)}
+.ledger__cell--key b{color:var(--brand)}
+
+.blockhead{
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:14px;padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:0;
+}
+.blockhead h3{margin:0;font-size:14px;font-weight:600}
+
+table.grid{width:100%;border-collapse:collapse;background:var(--surface)}
+table.grid th{
+  text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--slate);font-weight:400;
+  padding:11px 14px;border-bottom:1px solid var(--line);background:var(--paper);
+}
+table.grid td{padding:13px 14px;border-bottom:1px solid var(--line-soft);font-size:14px;vertical-align:middle}
+table.grid tr:last-child td{border-bottom:0}
+table.grid tbody tr{transition:background .13s}
+table.grid tbody tr.clickable:hover{background:#F6F8F9;cursor:pointer}
+.cellname{font-weight:500}
+.cellsub{display:block;color:var(--slate);font-size:12px;margin-top:2px}
+
+.pill{
+  display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;padding:3px 8px;border-radius:2px;border:1px solid var(--line);color:var(--slate);
+}
+.pill--live{border-color:var(--brand);color:var(--brand)}
+.pill--new{background:var(--brand);border-color:var(--brand);color:#fff}
+
+.btn{
+  border:1px solid var(--ink);background:var(--ink);color:#fff;
+  padding:9px 16px;border-radius:2px;font-size:13.5px;font-weight:500;
+  transition:opacity .15s;
+}
+.btn:hover{opacity:.86}
+.btn--ghost{background:none;color:var(--ink);border-color:var(--line)}
+.btn--ghost:hover{background:var(--surface);opacity:1}
+.btn--brand{background:var(--brand);border-color:var(--brand)}
+.btn--sm{padding:6px 11px;font-size:12.5px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:22px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--slate)}
+.field input,.field select{
+  border:1px solid var(--line);border-radius:2px;padding:9px 11px;
+  background:var(--surface);font-size:14px;
+}
+.field input:focus,.field select:focus{border-color:var(--brand);outline:none}
+.formfoot{display:flex;gap:10px;align-items:center;margin-top:20px;padding-top:18px;border-top:1px solid var(--line-soft)}
+
+/* Detailansicht einer Hochzeit */
+.detail{display:grid;grid-template-columns:1fr 268px;gap:30px;align-items:start}
+.linkrow{
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  padding:13px 0;border-bottom:1px solid var(--line-soft);
+}
+.linkrow:last-child{border-bottom:0}
+.linkrow__t{min-width:0}
+.linkrow__t strong{display:block;font-size:13.5px;font-weight:500}
+.linkrow__t code{
+  font-family:var(--mono);font-size:11.5px;color:var(--slate);
+  display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.qrbox{background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:18px;text-align:center}
+.qrbox svg{width:100%;height:auto;max-width:184px}
+.qrbox p{margin:12px 0 0;font-family:var(--mono);font-size:10.5px;color:var(--slate);letter-spacing:.06em}
+.meta{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:2px}
+.meta div{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line-soft);font-size:13px}
+.meta div:last-child{border-bottom:0}
+.meta span{color:var(--slate)}
+.meta b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+
+.swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.swatch{
+  width:44px;height:44px;border-radius:2px;border:2px solid transparent;
+  box-shadow:0 0 0 1px var(--line);position:relative;
+}
+.swatch[aria-pressed="true"]{border-color:var(--surface);box-shadow:0 0 0 2px var(--ink)}
+
+.note{
+  margin-top:30px;padding:15px 17px;background:var(--surface);
+  border:1px solid var(--line);border-left:2px solid var(--brand);border-radius:2px;
+  font-size:13.5px;color:var(--ink-2);max-width:66ch;
+}
+.note strong{font-weight:600;color:var(--ink)}
+
+/* ============================================================
+   FOTOGRAF
+   ============================================================ */
+.shootbar{background:var(--brand);color:#fff;padding:15px 40px;display:flex;align-items:center;gap:13px}
+.shootbar__mark{
+  width:28px;height:28px;border-radius:2px;background:rgba(255,255,255,.17);
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px;
+}
+.shootbar b{font-size:14.5px;font-weight:600}
+.shootbar span{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;opacity:.72;margin-left:auto}
+.shootwrap{padding:34px 40px 70px;max-width:920px}
+.drop{
+  border:1px dashed var(--line);border-radius:2px;background:var(--surface);
+  padding:44px 24px;text-align:center;
+}
+.drop h3{margin:0 0 6px;font-family:var(--serif);font-size:23px;font-weight:400}
+.drop p{margin:0 0 20px;color:var(--slate);font-size:13.5px}
+.bars{margin-top:22px;display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:150px 1fr 52px;gap:12px;align-items:center;font-family:var(--mono);font-size:11.5px;color:var(--slate)}
+.bar__track{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar__fill{height:100%;width:0;background:var(--brand);transition:width .28s linear}
+.bar__pct{text-align:right;font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   GAST — eigene Welt, komplett aus der Markenfarbe abgeleitet
+   ============================================================ */
+.stage{
+  background:var(--ink);min-height:calc(100vh - var(--rail-h));
+  padding:38px 20px 60px;display:flex;flex-direction:column;align-items:center;gap:20px;
+}
+.stage__hint{color:#7E8B98;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;text-align:center}
+.phone{
+  width:100%;max-width:376px;background:#FBFAF8;
+  background:color-mix(in oklab,var(--brand) 5%,#FBFAF8);
+  border-radius:26px;overflow:hidden;position:relative;
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+  height:706px;display:flex;flex-direction:column;
+}
+.phone__status{
+  flex:none;height:30px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;font-family:var(--mono);font-size:10px;color:var(--brand-ink);opacity:.55;
+}
+.phone__scroll{flex:1;overflow-y:auto;overscroll-behavior:contain}
+
+.scanview{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:30px}
+.scanview__card{background:#fff;padding:20px;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.07)}
+.scanview__card svg{width:160px;height:160px;display:block}
+.scanview p{margin:0;text-align:center;color:var(--brand-ink);font-size:13.5px;max-width:26ch;opacity:.75}
+
+.gsec{padding:0 26px}
+.ghero{padding:46px 26px 34px;text-align:center}
+.ghero__mark{
+  width:38px;height:38px;border-radius:2px;background:var(--brand);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);
+  font-size:21px;margin:0 auto 22px;
+}
+.ghero__venue{font-family:var(--mono);font-size:10px;letter-spacing:.19em;text-transform:uppercase;color:var(--brand);opacity:.8}
+.ghero h1{
+  margin:16px 0 0;font-family:var(--serif);font-size:47px;line-height:1.02;
+  font-weight:400;letter-spacing:-.02em;color:var(--brand-ink);
+}
+.ghero h1 em{display:block;font-size:26px;font-style:italic;margin:5px 0;opacity:.5}
+.ghero__date{margin:18px 0 0;font-family:var(--mono);font-size:12px;letter-spacing:.13em;color:var(--brand-ink);opacity:.62}
+.grule{height:1px;background:var(--brand);opacity:.16;margin:0 26px}
+
+.glabel{
+  font-family:var(--mono);font-size:10px;letter-spacing:.19em;text-transform:uppercase;
+  color:var(--brand);opacity:.75;padding:26px 26px 12px;
+}
+.tl{padding:0 26px}
+.tl__row{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+.tl__row:last-child{border-bottom:0}
+.tl__t{font-family:var(--mono);font-size:12px;color:var(--brand);font-variant-numeric:tabular-nums}
+.tl__d{font-size:14px;color:var(--brand-ink)}
+
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 26px}
+.tile{position:relative;overflow:hidden;background:#DDD8D0;aspect-ratio:3/4}
+.tile--wide{grid-column:span 2;aspect-ratio:16/10}
+.tile__cap{
+  position:absolute;left:0;right:0;bottom:0;padding:5px 7px;
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;color:#fff;
+  background:linear-gradient(to top,rgba(0,0,0,.42),transparent);
+  opacity:0;transition:opacity .18s;
+}
+.tile:hover .tile__cap{opacity:1}
+.gnote{padding:10px 26px 0;font-family:var(--mono);font-size:10px;color:var(--brand-ink);opacity:.45}
+
+.gbtn{
+  display:block;width:calc(100% - 52px);margin:18px 26px 0;
+  background:none;border:1px solid var(--brand);color:var(--brand);
+  padding:11px;border-radius:2px;font-size:13.5px;
+  transition:background .16s,color .16s;
+}
+.gbtn:hover{background:var(--brand);color:#fff}
+
+.cta{margin:34px 0 0;padding:32px 26px 40px;background:var(--brand);color:#fff}
+.cta h2{margin:0;font-family:var(--serif);font-size:29px;font-weight:400;line-height:1.15}
+.cta p{margin:11px 0 22px;font-size:13.5px;opacity:.82;line-height:1.55}
+.cta .field label{color:rgba(255,255,255,.62)}
+.cta .field input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.26);color:#fff}
+.cta .field input::placeholder{color:rgba(255,255,255,.42)}
+.cta .field input:focus{border-color:#fff}
+.cta .field{margin-bottom:12px}
+.cta__submit{
+  width:100%;background:#fff;color:var(--brand);border:0;padding:12px;
+  border-radius:2px;font-size:14px;font-weight:600;margin-top:6px;
+}
+.cta__done{text-align:center;padding:14px 0}
+.cta__done b{display:block;font-family:var(--serif);font-size:25px;font-weight:400;margin-bottom:9px}
+.cta__done p{margin:0;opacity:.8;font-size:13.5px}
+
+.gfoot{padding:20px 26px 30px;text-align:center;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--brand-ink);opacity:.4}
+
+.shellfoot{
+  padding:16px 20px;text-align:center;background:var(--ink);
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:#5C6975;
+}
+
+@media (max-width:900px){
+  .adm{flex-direction:column}
+  .adm__side{width:100%;border-right:0;border-bottom:1px solid var(--line);padding:16px 0}
+  .venuecard{padding-bottom:14px}
+  .navlist{flex-direction:row;overflow-x:auto;gap:4px}
+  .navbtn{white-space:nowrap}
+  .navbtn[aria-current="true"]{box-shadow:inset 0 -2px 0 var(--brand)}
+  .adm__main{padding:24px 20px 60px}
+  .ledger{grid-template-columns:1fr 1fr}
+  .ledger__cell:nth-child(3){border-left:0}
+  .ledger__cell:nth-child(n+3){border-top:1px solid var(--line-soft)}
+  .detail{grid-template-columns:1fr}
+  .formgrid{grid-template-columns:1fr}
+  .shootbar,.shootwrap{padding-left:20px;padding-right:20px}
+  .phead h1{font-size:27px}
+  .rail__tag,.arrow--back{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<div class="rail">
+  <div class="rail__tag">Klick-Dummy</div>
+  <div class="rail__track">
+    <button class="station" data-role="venue" aria-current="true"><span class="station__i">01</span>Location<span class="badge hidden" id="leadBadge">0</span></button>
+    <span class="arrow">→</span>
+    <button class="station" data-role="shooter"><span class="station__i">02</span>Fotograf</button>
+    <span class="arrow">→</span>
+    <button class="station" data-role="guest"><span class="station__i">03</span>Gast</button>
+    <span class="arrow--back">↺ Anfrage zurück an 01</span>
+  </div>
+  <button class="rail__reset" id="resetBtn">Zurücksetzen</button>
+</div>
+
+<!-- ========================= LOCATION ========================= -->
+<div id="view-venue">
+  <div class="adm">
+    <aside class="adm__side">
+      <div class="venuecard">
+        <div class="venuemark" id="sideMark">S</div>
+        <h2 id="sideName">Schloss Sonnenberg</h2>
+        <p class="eyebrow">Adminbereich</p>
+      </div>
+      <nav class="navlist">
+        <button class="navbtn" data-screen="dash" aria-current="true">Übersicht</button>
+        <button class="navbtn" data-screen="weddings">Hochzeiten <span class="cnt" id="navWed">4</span></button>
+        <button class="navbtn" data-screen="leads">Anfragen <span class="cnt" id="navLeads">3</span></button>
+        <button class="navbtn" data-screen="brand">Marke</button>
+      </nav>
+    </aside>
+
+    <main class="adm__main">
+      <!-- Übersicht -->
+      <section id="scr-dash">
+        <div class="phead">
+          <div class="eyebrow">Saison 2027</div>
+          <h1>Übersicht</h1>
+        </div>
+        <div class="ledger">
+          <div class="ledger__cell">
+            <div class="eyebrow">Hochzeiten gebucht</div>
+            <b id="kpiWed">42</b>
+            <small>davon 8 mit aktiver Galerie</small>
+          </div>
+          <div class="ledger__cell">
+            <div class="eyebrow">Gäste erreicht</div>
+            <b>3.412</b>
+            <small>über Galerien seit 2026</small>
+          </div>
+          <div class="ledger__cell ledger__cell--key">
+            <div class="eyebrow">Anfragen aus Galerien</div>
+            <b id="kpiLeads">14</b>
+            <small>daraus 3 gebuchte Termine</small>
+          </div>
+          <div class="ledger__cell">
+            <div class="eyebrow">Speicher belegt</div>
+            <b>612<span style="font-size:15px"> GB</span></b>
+            <small>von 2 TB im Tarif</small>
+          </div>
+        </div>
+
+        <div class="blockhead"><h3>Nächste Hochzeiten</h3>
+          <button class="btn btn--ghost btn--sm" data-goto="weddings">Alle ansehen</button>
+        </div>
+        <table class="grid"><tbody id="dashRows"></tbody></table>
+
+        <div class="note">
+          <strong>Warum die dritte Kennzahl die wichtigste ist.</strong> Jede Galerie wird von 80 bis 150 Gästen geöffnet. Ein Teil davon plant selbst eine Hochzeit. Die Galerie ist damit kein Service-Extra, sondern der günstigste Anfragekanal der Location — und der Grund, warum sich die Plattform für sie rechnet.
+        </div>
+      </section>
+
+      <!-- Hochzeiten -->
+      <section id="scr-weddings" class="hidden">
+        <div class="phead">
+          <div class="eyebrow">Verwaltung</div>
+          <h1>Hochzeiten</h1>
+          <p>Jede Hochzeit bekommt eine eigene Seite unter der Domain der Location. Anlegen dauert unter einer Minute.</p>
+        </div>
+        <div class="blockhead"><h3>Alle Hochzeiten</h3>
+          <button class="btn btn--brand btn--sm" id="newBtn">Neue Hochzeit</button>
+        </div>
+        <table class="grid">
+          <thead><tr><th>Paar</th><th>Termin</th><th>Adresse</th><th>Status</th></tr></thead>
+          <tbody id="wedRows"></tbody>
+        </table>
+
+        <div class="panel hidden" id="newForm" style="margin-top:26px">
+          <div class="eyebrow" style="margin-bottom:16px">Neue Hochzeit anlegen</div>
+          <div class="formgrid">
+            <div class="field"><label>Partner 1</label><input id="fA" value="Clara" autocomplete="off"></div>
+            <div class="field"><label>Partner 2</label><input id="fB" value="Jonathan" autocomplete="off"></div>
+            <div class="field"><label>Termin</label><input id="fD" type="date" value="2027-08-14"></div>
+            <div class="field"><label>Paket</label>
+              <select id="fP"><option>Galerie</option><option>Galerie + Gästebuch</option><option>Komplett</option></select>
+            </div>
+          </div>
+          <div class="formfoot">
+            <button class="btn btn--brand" id="createBtn">Hochzeit anlegen</button>
+            <button class="btn btn--ghost" id="cancelBtn">Abbrechen</button>
+            <span class="eyebrow" style="margin-left:auto">Seite und QR-Code entstehen automatisch</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Detail -->
+      <section id="scr-detail" class="hidden">
+        <div class="phead">
+          <button class="btn btn--ghost btn--sm" data-goto="weddings" style="margin-bottom:14px">← Hochzeiten</button>
+          <div class="eyebrow" id="dEyebrow">Termin</div>
+          <h1 id="dTitle">Anna &amp; Max</h1>
+        </div>
+        <div class="detail">
+          <div>
+            <div class="panel">
+              <div class="eyebrow" style="margin-bottom:6px">Zugänge</div>
+              <div class="linkrow">
+                <div class="linkrow__t"><strong>Hochzeitsseite</strong><code id="lnkPage">—</code></div>
+                <button class="btn btn--ghost btn--sm copy">Kopieren</button>
+              </div>
+              <div class="linkrow">
+                <div class="linkrow__t"><strong>Zugang für das Paar</strong><code id="lnkCouple">—</code></div>
+                <button class="btn btn--ghost btn--sm copy">Kopieren</button>
+              </div>
+              <div class="linkrow">
+                <div class="linkrow__t"><strong>Zugang für den Fotografen</strong><code id="lnkShooter">—</code></div>
+                <button class="btn btn--ghost btn--sm copy">Kopieren</button>
+              </div>
+              <div class="linkrow">
+                <div class="linkrow__t"><strong>Gästezugang</strong><code>Ohne Konto. Link läuft 12 Monate nach dem Termin ab.</code></div>
+                <span class="pill pill--live">Aktiv</span>
+              </div>
+            </div>
+            <div class="note" style="margin-top:22px">
+              <strong>Gäste bekommen bewusst kein Benutzerkonto.</strong> Wer sich für eine fremde Hochzeit registrieren muss, lädt nichts hoch. Der Link ist signiert und zeitlich begrenzt — das ist die entscheidende Produktentscheidung hinter der Upload-Quote.
+            </div>
+          </div>
+          <div>
+            <div class="qrbox">
+              <div id="qrHolder"></div>
+              <p>Für Tischkarten &amp; Aushang</p>
+            </div>
+            <div class="meta">
+              <div><span>Fotos</span><b id="mPhotos">342</b></div>
+              <div><span>Gäste erreicht</span><b id="mGuests">118</b></div>
+              <div><span>Speicher</span><b id="mStore">8,4 GB</b></div>
+              <div><span>Anfragen daraus</span><b id="mLeads">2</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Anfragen -->
+      <section id="scr-leads" class="hidden">
+        <div class="phead">
+          <div class="eyebrow">Vertrieb</div>
+          <h1>Anfragen aus Galerien</h1>
+          <p>Gäste, die auf einer Hochzeitsseite einen eigenen Termin angefragt haben. Die Quelle steht dabei — so sieht die Location, welche Hochzeit welche Anfrage gebracht hat.</p>
+        </div>
+        <table class="grid">
+          <thead><tr><th>Name</th><th>Kontakt</th><th>Wunschzeitraum</th><th>Quelle</th></tr></thead>
+          <tbody id="leadRows"></tbody>
+        </table>
+        <div class="note">
+          <strong>Das ist der Zahlungsgrund.</strong> Eine digitale Hochzeitsseite ist für eine Location ein nettes Extra. Eine Anfrageliste, die ohne Werbebudget entsteht, ist ein Umsatzkanal. Genau diese Tabelle gehört in euer Verkaufsgespräch — nicht der Funktionsumfang.
+        </div>
+      </section>
+
+      <!-- Marke -->
+      <section id="scr-brand" class="hidden">
+        <div class="phead">
+          <div class="eyebrow">White-Label</div>
+          <h1>Marke</h1>
+          <p>Alles, was Gäste sehen, wird aus diesen zwei Angaben abgeleitet. Kein individueller Code pro Kunde — sonst wird aus dem Produkt wieder eine Agentur.</p>
+        </div>
+        <div class="panel" style="max-width:560px">
+          <div class="field" style="margin-bottom:20px">
+            <label>Name der Location</label>
+            <input id="bName" value="Schloss Sonnenberg" autocomplete="off">
+          </div>
+          <div class="eyebrow">Markenfarbe</div>
+          <div class="swatches" id="swatches"></div>
+          <div class="formfoot">
+            <button class="btn btn--brand" data-role-jump="guest">Gastansicht öffnen</button>
+            <span class="eyebrow" style="margin-left:auto">Änderung wirkt sofort</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ========================= FOTOGRAF ========================= -->
+<div id="view-shooter" class="hidden">
+  <div class="shootbar">
+    <div class="shootbar__mark" id="shootMark">S</div>
+    <b id="shootVenue">Schloss Sonnenberg</b>
+    <span>Fotografen-Zugang</span>
+  </div>
+  <div class="shootwrap">
+    <div class="phead">
+      <div class="eyebrow">Auftrag · 12.06.2027</div>
+      <h1>Anna &amp; Max</h1>
+      <p>Der Fotograf ist nicht bei der Location angestellt und braucht trotzdem einen eigenen Zugang. Er sieht nur diese eine Hochzeit — sonst nichts.</p>
+    </div>
+    <div class="drop">
+      <h3>Noch keine Fotos hochgeladen</h3>
+      <p>JPG, PNG und HEIC. Abgebrochene Uploads werden fortgesetzt.</p>
+      <button class="btn btn--brand" id="upBtn">Fotos auswählen</button>
+      <div class="bars hidden" id="bars"></div>
+    </div>
+    <div class="hidden" id="shotDone">
+      <div class="blockhead" style="margin-top:34px"><h3>Hochgeladen</h3><span class="pill pill--live">Für Gäste freigegeben</span></div>
+      <div class="gallery" id="shotGallery" style="padding:16px 0 0;grid-template-columns:repeat(4,1fr)"></div>
+      <div class="note">
+        <strong>Was hier technisch passiert.</strong> 800 Bilder über schlechtes Schloss-WLAN sind der eigentliche Härtefall. Der Upload muss in Blöcken laufen, nach Abbruch fortsetzbar sein, HEIC konvertieren und die EXIF-Drehung korrigieren — sonst stehen die Bilder quer. Das gehört in den ersten Spike, nicht in Phase 8.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= GAST ========================= -->
+<div id="view-guest" class="hidden">
+  <div class="stage">
+    <div class="stage__hint">Ansicht der Gäste · Mobil</div>
+    <div class="phone">
+      <div class="phone__status"><span>9:41</span><span id="phoneHost">schloss-sonnenberg.de</span></div>
+      <div class="phone__scroll" id="phoneScroll">
+
+        <div id="guestScan" class="scanview">
+          <div class="scanview__card"><div id="qrGuest"></div></div>
+          <p>Der QR-Code liegt auf dem Tisch. Tippen, um zu scannen.</p>
+          <button class="btn btn--brand" id="scanBtn">QR-Code scannen</button>
+        </div>
+
+        <div id="guestPage" class="hidden">
+          <div class="ghero">
+            <div class="ghero__mark" id="gMark">S</div>
+            <div class="ghero__venue" id="gVenue">Schloss Sonnenberg</div>
+            <h1>Anna<em>&amp;</em>Max</h1>
+            <div class="ghero__date">12 · 06 · 2027</div>
+          </div>
+          <div class="grule"></div>
+
+          <div class="glabel">Ablauf</div>
+          <div class="tl">
+            <div class="tl__row"><div class="tl__t">14:00</div><div class="tl__d">Freie Trauung im Rosengarten</div></div>
+            <div class="tl__row"><div class="tl__t">15:30</div><div class="tl__d">Sektempfang auf der Terrasse</div></div>
+            <div class="tl__row"><div class="tl__t">18:00</div><div class="tl__d">Dinner im Spiegelsaal</div></div>
+            <div class="tl__row"><div class="tl__t">21:00</div><div class="tl__d">Eröffnungstanz, danach Party</div></div>
+          </div>
+
+          <div class="glabel">Galerie</div>
+          <div class="gallery" id="guestGallery"></div>
+          <div class="gnote" id="galNote">Fotos vom Fotografen · Stand 21:40 Uhr</div>
+          <button class="gbtn" id="guestUpload">Eigene Fotos hinzufügen</button>
+
+          <div class="cta">
+            <div id="ctaForm">
+              <h2>Sie feiern hier — heiraten Sie auch hier?</h2>
+              <p>Wir haben noch Termine für 2028 frei. Wenn Sie mögen, melden wir uns mit Verfügbarkeiten bei Ihnen.</p>
+              <div class="field"><label>Name</label><input id="cName" placeholder="Ihr Name" autocomplete="off"></div>
+              <div class="field"><label>E-Mail</label><input id="cMail" placeholder="name@beispiel.de" autocomplete="off"></div>
+              <div class="field"><label>Wunschzeitraum</label><input id="cWhen" placeholder="z. B. Sommer 2028" autocomplete="off"></div>
+              <button class="cta__submit" id="ctaSend">Termine anfragen</button>
+            </div>
+            <div id="ctaDone" class="cta__done hidden">
+              <b>Danke — die Anfrage ist da.</b>
+              <p>Sie liegt jetzt im Adminbereich der Location. Wechseln Sie oben auf <strong>01 Location → Anfragen</strong>.</p>
+            </div>
+          </div>
+          <div class="gfoot" id="gFoot">Schloss Sonnenberg · Anna &amp; Max</div>
+        </div>
+
+      </div>
+    </div>
+    <div class="stage__hint" style="max-width:376px">Der Gast sieht nie euren Namen — nur den der Location. Genau das ist White-Label.</div>
+  </div>
+</div>
+
+<div class="shellfoot">Klick-Dummy · keine echten Daten, keine echten Uploads</div>
+
+<script>
+/* ---------------- Zustand ---------------- */
+const SEED = {
+  venue:{name:"Schloss Sonnenberg", color:"#2E5145", host:"schloss-sonnenberg.de"},
+  weddings:[
+    {id:1,a:"Anna",b:"Max",date:"2027-06-12",slug:"anna-max",status:"live",photos:342,guests:118,store:"8,4 GB",leads:2},
+    {id:2,a:"Lena",b:"Jonas",date:"2027-05-22",slug:"lena-jonas",status:"prep",photos:0,guests:0,store:"0 GB",leads:0},
+    {id:3,a:"Marie",b:"Tobias",date:"2027-07-18",slug:"marie-tobias",status:"prep",photos:0,guests:0,store:"0 GB",leads:0},
+    {id:4,a:"Sophie",b:"Elias",date:"2026-09-05",slug:"sophie-elias",status:"done",photos:511,guests:96,store:"12,1 GB",leads:4}
+  ],
+  leads:[
+    {name:"Julia Berger",mail:"j.berger@web.de",when:"Sommer 2028",src:"Sophie & Elias",isNew:false},
+    {name:"Kevin Ortmann",mail:"kevin.o@gmx.net",when:"Mai 2028",src:"Sophie & Elias",isNew:false},
+    {name:"Familie Wendt",mail:"wendt@t-online.de",when:"noch offen",src:"Anna & Max",isNew:false}
+  ]
+};
+let S = structuredClone(SEED);
+let currentWed = 1, uploaded = false, guestExtra = 0;
+
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* ---------------- Hilfen ---------------- */
+const MON = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+function fmt(d){const p=d.split("-");return `${+p[2]}. ${MON[+p[1]-1]} ${p[0]}`}
+function fmtShort(d){const p=d.split("-");return `${p[2]}.${p[1]}.${p[0]}`}
+function slugify(s){
+  return s.toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
+          .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+}
+function hash(str){let h=5381;for(let i=0;i<str.length;i++)h=((h<<5)+h+str.charCodeAt(i))>>>0;return h}
+
+/* Pseudo-QR: echte Finder-Muster, deterministische Module */
+function qrSVG(text,size){
+  const N=25, m=Array.from({length:N},()=>Array(N).fill(0));
+  let h=hash(text);
+  const rnd=()=>{h^=h<<13;h>>>=0;h^=h>>17;h^=h<<5;h>>>=0;return h/4294967296};
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++) m[y][x]=rnd()>.53?1:0;
+  const finder=(ox,oy)=>{
+    for(let y=0;y<7;y++)for(let x=0;x<7;x++){
+      const edge=(x===0||x===6||y===0||y===6), core=(x>1&&x<5&&y>1&&y<5);
+      if(oy+y<N&&ox+x<N) m[oy+y][ox+x]=(edge||core)?1:0;
+    }
+    for(let y=-1;y<8;y++)for(let x=-1;x<8;x++){
+      const px=ox+x,py=oy+y;
+      if(px<0||py<0||px>=N||py>=N)continue;
+      if(x===-1||y===-1||x===7||y===7) m[py][px]=0;
+    }
+  };
+  finder(0,0);finder(N-7,0);finder(0,N-7);
+  let r="";
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++) if(m[y][x]) r+=`<rect x="${x}" y="${y}" width="1" height="1"/>`;
+  return `<svg viewBox="0 0 ${N} ${N}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="QR-Code"><rect width="${N}" height="${N}" fill="#fff"/><g fill="#131A20">${r}</g></svg>`;
+}
+
+/* Foto-Platzhalter: gedämpfte Töne rund um die Markenfarbe */
+function brandHue(){
+  const hex=S.venue.color, r=parseInt(hex.substr(1,2),16)/255,g=parseInt(hex.substr(3,2),16)/255,b=parseInt(hex.substr(5,2),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let hh=0;
+  if(mx!==mn){const d=mx-mn;
+    hh = mx===r ? ((g-b)/d+(g<b?6:0)) : mx===g ? ((b-r)/d+2) : ((r-g)/d+4);
+    hh*=60;}
+  return hh;
+}
+function tileHTML(i,wide){
+  const base=brandHue(), h=(base + ((i*47)%70) - 35 + 360)%360;
+  const l1=60+((i*17)%16), l2=32+((i*23)%14), s=8+((i*11)%13);
+  const ang=[145,25,200,315][i%4];
+  const bg=`linear-gradient(${ang}deg,hsl(${h} ${s}% ${l1}%),hsl(${(h+18)%360} ${s+5}% ${l2}%))`;
+  const n=String(2400+i*13);
+  return `<figure class="tile${wide?" tile--wide":""}" style="background-image:${bg}">
+    <figcaption class="tile__cap">IMG_${n}.HEIC</figcaption></figure>`;
+}
+
+/* ---------------- Rollen ---------------- */
+function setRole(role){
+  $$(".station").forEach(b=>b.setAttribute("aria-current", String(b.dataset.role===role)));
+  ["venue","shooter","guest"].forEach(r=>$("#view-"+r).classList.toggle("hidden", r!==role));
+  window.scrollTo({top:0,behavior:"instant"});
+}
+$$(".station").forEach(b=>b.addEventListener("click",()=>setRole(b.dataset.role)));
+$$("[data-role-jump]").forEach(b=>b.addEventListener("click",()=>setRole(b.dataset.roleJump)));
+
+/* ---------------- Admin-Navigation ---------------- */
+function setScreen(name){
+  $$(".navbtn").forEach(b=>b.setAttribute("aria-current", String(b.dataset.screen===name)));
+  ["dash","weddings","detail","leads","brand"].forEach(s=>$("#scr-"+s).classList.toggle("hidden", s!==name));
+  if(name==="leads") S.leads.forEach(l=>l.isNew=false), setTimeout(renderLeadBadge,900);
+  window.scrollTo({top:0,behavior:"instant"});
+}
+$$(".navbtn").forEach(b=>b.addEventListener("click",()=>setScreen(b.dataset.screen)));
+$$("[data-goto]").forEach(b=>b.addEventListener("click",()=>setScreen(b.dataset.goto)));
+
+/* ---------------- Rendern ---------------- */
+function statusPill(s){
+  if(s==="live") return '<span class="pill pill--live">Galerie aktiv</span>';
+  if(s==="done") return '<span class="pill">Abgeschlossen</span>';
+  return '<span class="pill">In Vorbereitung</span>';
+}
+function renderWeddings(){
+  const rows = S.weddings.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  $("#wedRows").innerHTML = rows.map(w=>`
+    <tr class="clickable" data-id="${w.id}">
+      <td><span class="cellname">${w.a} &amp; ${w.b}</span><span class="cellsub num">${w.photos} Fotos · ${w.store}</span></td>
+      <td class="num">${fmtShort(w.date)}</td>
+      <td><code style="font-family:var(--mono);font-size:11.5px;color:var(--slate)">hochzeit.${S.venue.host}/${w.slug}</code></td>
+      <td>${statusPill(w.status)}</td>
+    </tr>`).join("");
+  $("#dashRows").innerHTML = rows.filter(w=>w.date>"2027-01-01").slice(0,3).map(w=>`
+    <tr class="clickable" data-id="${w.id}">
+      <td><span class="cellname">${w.a} &amp; ${w.b}</span><span class="cellsub">${fmt(w.date)}</span></td>
+      <td style="text-align:right">${statusPill(w.status)}</td>
+    </tr>`).join("");
+  $("#navWed").textContent = S.weddings.length;
+  $("#kpiWed").textContent = 38 + S.weddings.length;
+  $$("tr.clickable").forEach(tr=>tr.addEventListener("click",()=>openWedding(+tr.dataset.id)));
+}
+function openWedding(id){
+  currentWed = id;
+  const w = S.weddings.find(x=>x.id===id);
+  const url = `hochzeit.${S.venue.host}/${w.slug}`;
+  $("#dTitle").innerHTML = `${w.a} &amp; ${w.b}`;
+  $("#dEyebrow").textContent = fmt(w.date);
+  $("#lnkPage").textContent = url;
+  $("#lnkCouple").textContent = `${url}/einladung/${hash(w.slug).toString(36).slice(0,8)}`;
+  $("#lnkShooter").textContent = `${url}/foto/${hash(w.slug+"f").toString(36).slice(0,8)}`;
+  $("#qrHolder").innerHTML = qrSVG(url,184);
+  $("#mPhotos").textContent = w.photos;
+  $("#mGuests").textContent = w.guests;
+  $("#mStore").textContent = w.store;
+  $("#mLeads").textContent = w.leads;
+  setScreen("detail");
+}
+function renderLeads(){
+  $("#leadRows").innerHTML = S.leads.map(l=>`
+    <tr>
+      <td><span class="cellname">${l.name}</span>${l.isNew?' <span class="pill pill--new">Neu</span>':''}</td>
+      <td><code style="font-family:var(--mono);font-size:12px;color:var(--slate)">${l.mail}</code></td>
+      <td>${l.when}</td>
+      <td>${l.src}</td>
+    </tr>`).join("");
+  $("#navLeads").textContent = S.leads.length;
+  $("#kpiLeads").textContent = 11 + S.leads.length;
+}
+function renderLeadBadge(){
+  const n = S.leads.filter(l=>l.isNew).length;
+  const el = $("#leadBadge");
+  el.textContent = n; el.classList.toggle("hidden", n===0);
+}
+function renderBrand(){
+  document.documentElement.style.setProperty("--brand", S.venue.color);
+  const dark = S.venue.color.replace(/^#/,"").match(/.{2}/g).map(h=>Math.round(parseInt(h,16)*.68).toString(16).padStart(2,"0")).join("");
+  document.documentElement.style.setProperty("--brand-ink", "#"+dark);
+  const initial = S.venue.name.trim().charAt(0).toUpperCase() || "S";
+  ["#sideMark","#shootMark","#gMark"].forEach(s=>$(s).textContent=initial);
+  ["#sideName","#shootVenue","#gVenue"].forEach(s=>$(s).textContent=S.venue.name);
+  $("#phoneHost").textContent = S.venue.host;
+  $("#gFoot").innerHTML = `${S.venue.name} · Anna &amp; Max`;
+  $$(".swatch").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.color.toLowerCase()===S.venue.color.toLowerCase())));
+}
+
+/* Farbwähler */
+const COLORS=[["#2E5145","Salbei"],["#7B2D3B","Oxblood"],["#24405E","Marine"],["#8A5E2B","Messing"],["#4A3B62","Aubergine"]];
+$("#swatches").innerHTML = COLORS.map(([c,n])=>`<button class="swatch" data-color="${c}" title="${n}" style="background:${c}" aria-pressed="false"></button>`).join("");
+$$(".swatch").forEach(b=>b.addEventListener("click",()=>{S.venue.color=b.dataset.color;renderBrand();renderGuestGallery();}));
+$("#bName").addEventListener("input",e=>{
+  S.venue.name = e.target.value || "Ihre Location";
+  S.venue.host = (slugify(S.venue.name)||"ihre-location")+".de";
+  renderBrand(); renderWeddings();
+});
+
+/* Neue Hochzeit */
+$("#newBtn").addEventListener("click",()=>$("#newForm").classList.remove("hidden"));
+$("#cancelBtn").addEventListener("click",()=>$("#newForm").classList.add("hidden"));
+$("#createBtn").addEventListener("click",()=>{
+  const a=$("#fA").value.trim()||"Partner 1", b=$("#fB").value.trim()||"Partner 2", d=$("#fD").value||"2027-08-14";
+  const w={id:Date.now(),a,b,date:d,slug:slugify(a+"-"+b),status:"prep",photos:0,guests:0,store:"0 GB",leads:0};
+  S.weddings.push(w);
+  $("#newForm").classList.add("hidden");
+  renderWeddings(); openWedding(w.id);
+});
+
+/* Kopieren */
+$$(".copy").forEach(b=>b.addEventListener("click",()=>{
+  const t=b.parentElement.querySelector("code").textContent;
+  navigator.clipboard?.writeText(t).catch(()=>{});
+  const o=b.textContent; b.textContent="Kopiert"; setTimeout(()=>b.textContent=o,1200);
+}));
+
+/* ---------------- Fotograf ---------------- */
+$("#upBtn").addEventListener("click",()=>{
+  if(uploaded) return;
+  const files=[["DSC_4417.HEIC","4,2 MB"],["DSC_4418.HEIC","3,9 MB"],["DSC_4431.HEIC","5,1 MB"],["DSC_4452.HEIC","4,4 MB"]];
+  const bars=$("#bars"); bars.classList.remove("hidden");
+  bars.innerHTML = files.map((f,i)=>`
+    <div class="bar"><span>${f[0]}</span><div class="bar__track"><div class="bar__fill" id="bf${i}"></div></div><span class="bar__pct" id="bp${i}">0 %</span></div>`).join("");
+  $("#upBtn").textContent="Lädt hoch …"; $("#upBtn").disabled=true;
+  files.forEach((f,i)=>{
+    let p=0;
+    const t=setInterval(()=>{
+      p=Math.min(100,p+8+Math.random()*13);
+      $("#bf"+i).style.width=p+"%"; $("#bp"+i).textContent=Math.round(p)+" %";
+      if(p>=100){clearInterval(t); if(i===files.length-1) finishUpload();}
+    }, 130+i*45);
+  });
+});
+function finishUpload(){
+  uploaded=true;
+  setTimeout(()=>{
+    $("#upBtn").textContent="Fertig — 342 Fotos"; 
+    $("#shotDone").classList.remove("hidden");
+    $("#shotGallery").innerHTML = Array.from({length:8},(_,i)=>tileHTML(i+3,false)).join("");
+    const w=S.weddings.find(x=>x.id===1); w.photos=342; w.status="live"; renderWeddings();
+  },380);
+}
+
+/* ---------------- Gast ---------------- */
+function renderGuestGallery(){
+  const n = 6 + guestExtra;
+  let html="";
+  for(let i=0;i<n;i++) html += tileHTML(i, i===0||i===5);
+  $("#guestGallery").innerHTML = html;
+  if(uploaded || guestExtra) $("#shotGallery").innerHTML = Array.from({length:8},(_,i)=>tileHTML(i+3,false)).join("");
+}
+$("#scanBtn").addEventListener("click",()=>{
+  $("#guestScan").classList.add("hidden");
+  $("#guestPage").classList.remove("hidden");
+  $("#phoneScroll").scrollTop=0;
+});
+$("#guestUpload").addEventListener("click",()=>{
+  guestExtra += 2; renderGuestGallery();
+  $("#galNote").textContent = `Fotos vom Fotografen und von ${12+guestExtra} Gästen · gerade eben`;
+  $("#guestUpload").textContent = "2 Fotos hinzugefügt";
+  setTimeout(()=>$("#guestUpload").textContent="Weitere Fotos hinzufügen",1400);
+});
+$("#ctaSend").addEventListener("click",()=>{
+  const name=$("#cName").value.trim()||"Miriam Kessler";
+  const mail=$("#cMail").value.trim()||"m.kessler@posteo.de";
+  const when=$("#cWhen").value.trim()||"Sommer 2028";
+  S.leads.unshift({name,mail,when,src:"Anna & Max",isNew:true});
+  const w=S.weddings.find(x=>x.id===1); w.leads++;
+  $("#ctaForm").classList.add("hidden"); $("#ctaDone").classList.remove("hidden");
+  renderLeads(); flyToken();
+});
+
+/* Signature-Moment: die Anfrage läuft sichtbar zur Location zurück */
+function flyToken(){
+  const from=$('.station[data-role="guest"]').getBoundingClientRect();
+  const to=$('.station[data-role="venue"]').getBoundingClientRect();
+  const t=document.createElement("div"); t.className="token";
+  t.style.left=(from.left+from.width/2-5.5)+"px";
+  t.style.top=(from.top+from.height/2-5.5)+"px";
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>{
+    t.style.transform=`translate(${to.left+to.width/2-from.left-from.width/2}px, 0)`;
+    t.style.opacity="0";
+  });
+  setTimeout(()=>{t.remove(); renderLeadBadge();},1250);
+}
+
+/* ---------------- Reset ---------------- */
+$("#resetBtn").addEventListener("click",()=>{
+  S=structuredClone(SEED); currentWed=1; uploaded=false; guestExtra=0;
+  $("#bName").value=S.venue.name;
+  $("#bars").classList.add("hidden"); $("#bars").innerHTML="";
+  $("#shotDone").classList.add("hidden");
+  $("#upBtn").disabled=false; $("#upBtn").textContent="Fotos auswählen";
+  $("#guestScan").classList.remove("hidden"); $("#guestPage").classList.add("hidden");
+  $("#ctaForm").classList.remove("hidden"); $("#ctaDone").classList.add("hidden");
+  $("#cName").value=""; $("#cMail").value=""; $("#cWhen").value="";
+  $("#galNote").textContent="Fotos vom Fotografen · Stand 21:40 Uhr";
+  $("#guestUpload").textContent="Eigene Fotos hinzufügen";
+  boot(); setRole("venue"); setScreen("dash");
+});
+
+/* ---------------- Start ---------------- */
+function boot(){
+  renderBrand(); renderWeddings(); renderLeads(); renderLeadBadge(); renderGuestGallery();
+  $("#qrGuest").innerHTML = qrSVG(`hochzeit.${S.venue.host}/anna-max`,160);
+  openWedding(1); setScreen("dash");
+}
+boot();
+</script>
+</body>
+</html>
